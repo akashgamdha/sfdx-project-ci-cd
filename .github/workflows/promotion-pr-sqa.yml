@@ -40,8 +40,8 @@ jobs:
                         echo "environment variables are initialized..."
                         
                         # Configure git
-                        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-                        git config --global user.name "github-actions[bot]"
+                        git config --global user.email "akash.gamdha@mckesson.com"
+                        git config --global user.name "akashgamdha"
                         echo "Git Configured..."
                         
                         # Exit if source branch starts with 'gh-pipeline'
