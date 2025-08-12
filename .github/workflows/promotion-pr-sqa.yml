@@ -55,15 +55,22 @@ jobs:
                         if git rev-parse --verify --quiet "origin/${PIPELINE_BRANCH}"; then
                           echo "Pipeline branch exists. Merging PR source branch into pipeline branch..."
                           git checkout "${PIPELINE_BRANCH}"
+                          echo "Checked out existing pipeline branch"
                           git pull origin "${PIPELINE_BRANCH}"
+                          echo "Pulled existing pipeline branch"
                           git merge "origin/${SOURCE_BRANCH}" --no-edit
+                          echo "Merged source branch in existing pipeline branch"
                           git push origin "${PIPELINE_BRANCH}"
+                          echo "Pushed existing pipeline branch"
                         else
                           echo "Pipeline branch does not exist. Creating pipeline branch from source branch..."
                           git checkout -b "${PIPELINE_BRANCH}" "origin/${SOURCE_BRANCH}"
+                          echo "Checked out new pipeline branch"
                           git push origin "${PIPELINE_BRANCH}"
+                          echo "Pushed new pipeline branch"
                         fi
-                        
+
+                        echo "Checking if PR exists"
                         # Check if a PR exists with the pipeline branch as source
                         EXISTING_PR=$(gh pr list --state open --base "${TARGET_BRANCH}" --head "${PIPELINE_BRANCH}" --json number --jq '.[].number')
                         
