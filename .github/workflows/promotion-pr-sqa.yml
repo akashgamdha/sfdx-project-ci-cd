@@ -28,8 +28,8 @@ jobs:
                         PIPELINE_BRANCH_SQA: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_SQA"
                         PIPELINE_BRANCH_UAT: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_UAT"
                         PIPELINE_BRANCH_MAIN: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_main"
-                        PR_TITLE: "${{ github.event.pull_request.title }}"
-                        PR_BODY: "${{ github.event.pull_request.body }}"
+                        PR_TITLE: ${{ github.event.pull_request.title }}
+                        PR_BODY: ${{ github.event.pull_request.body }}
                   run: |
                         #!/bin/bash
 
@@ -42,8 +42,8 @@ jobs:
                         PIPELINE_BRANCH_UAT=$PIPELINE_BRANCH_UAT
                         PIPELINE_BRANCH_MAIN=$PIPELINE_BRANCH_MAIN
                         PR_NUMBER=$PR_NUMBER
-                        PR_TITLE: $PR_TITLE
-                        PR_BODY: $PR_BODY
+                        PR_TITLE=$PR_TITLE
+                        PR_BODY=$PR_BODY
                         
                         echo "environment variables are initialized..."
                         
@@ -143,8 +143,8 @@ jobs:
                         TARGET_BRANCH: "UAT"
                         PIPELINE_BRANCH_UAT: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_UAT"
                         PIPELINE_BRANCH_MAIN: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_main"
-                        PR_TITLE: "${{ github.event.pull_request.title }}"
-                        PR_BODY: "${{ github.event.pull_request.body }}"
+                        PR_TITLE: ${{ github.event.pull_request.title }}
+                        PR_BODY: ${{ github.event.pull_request.body }}
                   run: |
                         #!/bin/bash
 
@@ -155,8 +155,8 @@ jobs:
                         TARGET_BRANCH=$TARGET_BRANCH
                         PIPELINE_BRANCH_UAT=$PIPELINE_BRANCH_UAT
                         PIPELINE_BRANCH_MAIN=$PIPELINE_BRANCH_MAIN
-                        PR_TITLE: $PR_TITLE
-                        PR_BODY: $PR_BODY
+                        PR_TITLE=$PR_TITLE
+                        PR_BODY=$PR_BODY
                         
                         echo "environment variables are initialized..."
                         
