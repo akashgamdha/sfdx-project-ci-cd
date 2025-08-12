@@ -21,7 +21,7 @@ jobs:
 
                 - name: Run pipeline creation script
                   env:
-                        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                        GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
                         SOURCE_BRANCH: ${{ github.event.pull_request.head.ref }}
                         PR_NUMBER: ${{ github.event.pull_request.number }}
                         TARGET_BRANCH: "UAT"
@@ -132,7 +132,7 @@ jobs:
                         
                 - name: Run pipeline creation script
                   env:
-                        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                        GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
                         SOURCE_BRANCH: ${{ env.FEATURE_BRANCH }}
                         TARGET_BRANCH: "MAIN"
                         PIPELINE_BRANCH_MAIN: "gh-pipeline/${{ env.FEATURE_BRANCH }}_-_main"
