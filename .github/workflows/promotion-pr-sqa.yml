@@ -73,8 +73,10 @@ jobs:
 
                         echo "Checking if PR exists"
                         # Check if a PR exists with the pipeline branch as source
-                        EXISTING_PR=$(gh pr list --state open --base "${TARGET_BRANCH}" --head "${PIPELINE_BRANCH}" --json number --jq '.[].number')
-                        
+                        EXISTING_PR_VERB=$(gh pr list --state open --base "${TARGET_BRANCH}" --head "${PIPELINE_BRANCH}" --json number)
+                        echo "Verbos $EXISTING_PR_VERB}"
+                        EXISTING_PR=$(gh pr list --state open --base "${TARGET_BRANCH}" --head "${PIPELINE_BRANCH}" --json number --jq ".[].number")
+                        echo "Checking if PR complete"
                         if [ -z "$EXISTING_PR" ]; then
                           echo "No existing PR from pipeline branch. Creating a new PR..."
                           
