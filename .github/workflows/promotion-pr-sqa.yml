@@ -18,7 +18,10 @@ jobs:
                   run: |
                         sudo apt update -y
                         sudo apt install gh -y
-
+                        
+                - name: Make script executable
+                  run: chmod +x .github/scripts/pipeline_creation.sh
+                  
                 - name: Run pipeline creation script
                   env:
                         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
