@@ -18,7 +18,26 @@ jobs:
                   run: |
                         sudo apt update -y
                         sudo apt install gh -y
-                  
+
+                - name: Install jq
+                  run: sudo apt-get install jq -y
+
+                - name: Extract pull request details into environment variables
+                  id: extract_details
+                  run: |
+                        echo "Fetching Pull Request Details..."
+                        export PR_TITLE=$(jq -r '.pull_request.title' < "$GITHUB_EVENT_PATH")
+                        export PR_BODY=$(jq -r '.pull_request.body' < "$GITHUB_EVENT_PATH")
+                        export PR_ASSIGNEE=$(jq -r '.pull_request.assignee.login // "None"' < "$GITHUB_EVENT_PATH")
+                        export PR_LABELS=$(jq -r '.pull_request.labels | map(.name) | join(", ")' < "$GITHUB_EVENT_PATH")
+                        export PR_REVIEWERS=$(jq -r '.pull_request.requested_reviewers | map(.login) | join(", ")' < "$GITHUB_EVENT_PATH")
+
+                        echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
+                        echo "PR_BODY=$PR_BODY" >> $GITHUB_ENV
+                        echo "PR_ASSIGNEE=$PR_ASSIGNEE" >> $GITHUB_ENV
+                        echo "PR_LABELS=$PR_LABELS" >> $GITHUB_ENV
+                        echo "PR_REVIEWERS=$PR_REVIEWERS" >> $GITHUB_ENV
+
                 - name: Run pipeline creation script
                   env:
                         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -26,11 +45,11 @@ jobs:
                         PR_NUMBER: ${{ github.event.pull_request.number }}
                         TARGET_BRANCH: "SQA"
                         PIPELINE_BRANCH: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_SQA"
-                        PR_TITLE: ${{ github.event.pull_request.title }}
-                        PR_BODY: ${{ github.event.pull_request.body }}
-                        PR_ASSIGNEE: ${{ github.event.pull_request.assignee.login // "None"}}
-                        PR_LABELS: ${{ github.event.pull_request.labels | map(.name) | join(", ") }}
-                        PR_REVIEWERS: ${{ github.event.pull_request.requested_reviewers | map(.login) | join(", ") }}
+                        PR_TITLE: ${{ env.PR_TITLE }}
+                        PR_BODY: ${{ env.PR_BODY }}
+                        PR_ASSIGNEE: ${{ env.PR_ASSIGNEE }}
+                        PR_LABELS: ${{ env.PR_LABELS }}
+                        PR_REVIEWERS: ${{ env.PR_REVIEWERS }}
                   run: |
                         #!/bin/bash
 
