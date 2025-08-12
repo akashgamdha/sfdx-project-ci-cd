@@ -135,14 +135,21 @@ jobs:
                   run: |
                         sudo apt update -y
                         sudo apt install gh -y
-
+                        
+                - name: Extract origina feature branch name
+                  run: |
+                        echo "Original ref: ${{ github.event.pull_request.head.ref }}"
+                        FEATURE_BRANCH=$(echo "${{ github.event.pull_request.head.ref }}" | sed -n 's|^gh-pipeline/\(.*\)_-_SQA$|\1|p')
+                        echo "Extracted test part: $FEATURE_BRANCH"
+                        echo "FEATURE_BRANCH=$FEATURE_BRANCH" >> $GITHUB_ENV
+                        
                 - name: Run pipeline creation script
                   env:
                         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                        SOURCE_BRANCH: ${{ github.event.pull_request.head.ref }}
+                        SOURCE_BRANCH: ${{ env.FEATURE_BRANCH }}
                         TARGET_BRANCH: "UAT"
-                        PIPELINE_BRANCH_UAT: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_UAT"
-                        PIPELINE_BRANCH_MAIN: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_main"
+                        PIPELINE_BRANCH_UAT: "gh-pipeline/$${{ env.FEATURE_BRANCH }}_-_UAT"
+                        PIPELINE_BRANCH_MAIN: "gh-pipeline/${{ env.FEATURE_BRANCH }}_-_main"
                         PR_TITLE: ${{ github.event.pull_request.title }}
                         PR_BODY: ${{ github.event.pull_request.body }}
                   run: |
@@ -174,13 +181,6 @@ jobs:
                           echo "No existing PR from pipeline branch. Creating a new PR..."
                           
                           NEW_PR_URL=$(gh pr create --base "${TARGET_BRANCH}" --head "${SOURCE_BRANCH}" --title "${PR_TITLE}" --body "${PR_BODY}")
-                          echo "Pipeline PR created: ${NEW_PR_URL}"
-                          NEW_PR=$(echo "$NEW_PR_URL" | grep -o '[0-9]*$')
-                          echo "Pipeline PR created: #${NEW_PR}"
-                        
-                          # Add a comment to the original PR
-                          gh pr comment "${PR_NUMBER}" --body "A new PR was created for pipeline: #${NEW_PR}"
                         else
                           echo "Pipeline PR already exists: #${EXISTING_PR}"
                         fi
-
