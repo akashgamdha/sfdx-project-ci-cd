@@ -165,12 +165,6 @@ jobs:
                         # git config --global user.name "akashgamdha"
                         # gh auth login --with-token <<< "${GH_TOKEN}"
                         echo "Git Configured..."
-                        
-                        # Exit if source branch starts with 'gh-pipeline'
-                        if [[ $SOURCE_BRANCH == gh-pipeline* ]]; then
-                          echo "Source branch starts with 'gh-pipeline'. Skipping jobs."
-                          exit 0
-                        fi
 
                         echo "Checking if PR exists"
                         # Check if a PR exists with the pipeline branch as source
@@ -189,7 +183,4 @@ jobs:
                         else
                           echo "Pipeline PR already exists: #${EXISTING_PR}"
                         fi
-
-                        # Close the original PR
-                        gh pr close "${PR_NUMBER}"
 
