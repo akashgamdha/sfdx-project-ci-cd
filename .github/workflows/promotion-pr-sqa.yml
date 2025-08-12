@@ -28,7 +28,9 @@ jobs:
                         PIPELINE_BRANCH: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_SQA"
                         PR_TITLE: ${{ github.event.pull_request.title }}
                         PR_BODY: ${{ github.event.pull_request.body }}
-                        PR_ASSIGNEE: ${{ github.event.pull_request.assignee.login }}
+                        PR_ASSIGNEE: ${{ github.event.pull_request.assignee.login // "None"}}
+                        PR_LABELS: ${{ github.event.pull_request.labels | map(.name) | join(", ") }}
+                        PR_REVIEWERS: ${{ github.event.pull_request.requested_reviewers | map(.login) | join(", ") }}
                   run: |
                         #!/bin/bash
 
@@ -39,6 +41,11 @@ jobs:
                         TARGET_BRANCH=$TARGET_BRANCH
                         PIPELINE_BRANCH=$PIPELINE_BRANCH
                         PR_NUMBER=$PR_NUMBER
+                        PR_TITLE: $PR_TITLE
+                        PR_BODY: $PR_BODY
+                        PR_ASSIGNEE: $PR_ASSIGNEE
+                        PR_LABELS: $PR_LABELS
+                        PR_REVIEWERS: $PR_REVIEWERS
                         
                         echo "environment variables are initialized..."
                         
@@ -81,7 +88,7 @@ jobs:
                         if [ -z "$EXISTING_PR" ]; then
                           echo "No existing PR from pipeline branch. Creating a new PR..."
                           
-                          NEW_PR_URL=$(gh pr create --base "${TARGET_BRANCH}" --head "${PIPELINE_BRANCH}" --title "Pipeline PR from ${PIPELINE_BRANCH} to ${TARGET_BRANCH}" --body "This PR is created for the pipeline of original PR: #${PR_NUMBER}")
+                          NEW_PR_URL=$(gh pr create --base "${TARGET_BRANCH}" --head "${PIPELINE_BRANCH}" --title "${PR_TITLE}" --body "${PR_BODY}" --assignee "${PR_ASSIGNEE}" --label "${PR_LABELS}" --reviewer "${PR_REVIEWERS}")
                           echo "Pipeline PR created: ${NEW_PR_URL}"
                           NEW_PR=$(echo "$NEW_PR_URL" | grep -o '[0-9]*$')
                           echo "Pipeline PR created: #${NEW_PR}"
