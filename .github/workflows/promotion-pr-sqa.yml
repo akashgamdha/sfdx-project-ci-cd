@@ -143,8 +143,8 @@ jobs:
                         TARGET_BRANCH: "UAT"
                         PIPELINE_BRANCH_UAT: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_UAT"
                         PIPELINE_BRANCH_MAIN: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_main"
-                        PR_TITLE: ${{ github.event.pull_request.title }}
-                        PR_BODY: ${{ github.event.pull_request.body }}
+                        PR_TITLE: "${{ github.event.pull_request.title }}"
+                        PR_BODY: "${{ github.event.pull_request.body }}"
                   run: |
                         #!/bin/bash
 
