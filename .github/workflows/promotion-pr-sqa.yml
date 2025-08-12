@@ -73,8 +73,6 @@ jobs:
 
                         echo "Checking if PR exists"
                         # Check if a PR exists with the pipeline branch as source
-                        EXISTING_PR_VERB=$(gh pr list --state open --base "${TARGET_BRANCH}" --head "${PIPELINE_BRANCH}")
-                        echo "Verbos $EXISTING_PR_VERB}"
                         EXISTING_PR=$(gh pr list --state open --base "${TARGET_BRANCH}" --head "${PIPELINE_BRANCH}" --json number --jq ".[].number")
                         echo "Checking if PR complete"
                         if [ -z "$EXISTING_PR" ]; then
@@ -82,7 +80,7 @@ jobs:
                           
                           NEW_PR_URL=$(gh pr create --base "${TARGET_BRANCH}" --head "${PIPELINE_BRANCH}" --title "Pipeline PR from ${PIPELINE_BRANCH} to ${TARGET_BRANCH}" --body "This PR is created for the pipeline of original PR: #${PR_NUMBER}")
                           echo "Pipeline PR created: ${NEW_PR_URL}"
-                          NEW_PR=$(echo "$NEW_PR_URL" | grep -o '[0-9]*$)
+                          NEW_PR=$(echo "$NEW_PR_URL" | grep -o '[0-9]*$')
                           echo "Pipeline PR created: #${NEW_PR}"
                         
                           # Add a comment to the original PR
