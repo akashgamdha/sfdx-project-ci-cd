@@ -21,7 +21,7 @@ jobs:
                   
                 - name: Run pipeline creation script
                   env:
-                        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                        GITHUB_TOKEN: ${{ secrets.TOKEN }}
                         SOURCE_BRANCH: ${{ github.event.pull_request.head.ref }}
                         PR_NUMBER: ${{ github.event.pull_request.number }}
                         TARGET_BRANCH: "SQA"
@@ -42,7 +42,7 @@ jobs:
                         # Configure git
                         # git config --global user.email "akash.gamdha@mckesson.com"
                         # git config --global user.name "akashgamdha"
-                        gh auth login --with-token <<< "${GITHUB_TOKEN}"
+                        # gh auth login --with-token <<< "${GITHUB_TOKEN}"
                         echo "Git Configured..."
                         
                         # Exit if source branch starts with 'gh-pipeline'
