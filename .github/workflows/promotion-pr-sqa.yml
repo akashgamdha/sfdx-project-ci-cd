@@ -19,25 +19,6 @@ jobs:
                         sudo apt update -y
                         sudo apt install gh -y
 
-                - name: Install jq
-                  run: sudo apt-get install jq -y
-
-                - name: Extract pull request details into environment variables
-                  id: extract_details
-                  run: |
-                        echo "Fetching Pull Request Details..."
-                        export PR_TITLE=$(jq -r '.pull_request.title' < "$GITHUB_EVENT_PATH")
-                        export PR_BODY=$(jq -r '.pull_request.body' < "$GITHUB_EVENT_PATH")
-                        export PR_ASSIGNEE=$(jq -r '.pull_request.assignee.login // "None"' < "$GITHUB_EVENT_PATH")
-                        export PR_LABELS=$(jq -r '.pull_request.labels | map(.name) | join(", ")' < "$GITHUB_EVENT_PATH")
-                        export PR_REVIEWERS=$(jq -r '.pull_request.requested_reviewers | map(.login) | join(", ")' < "$GITHUB_EVENT_PATH")
-
-                        echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
-                        echo "PR_BODY=$PR_BODY" >> $GITHUB_ENV
-                        echo "PR_ASSIGNEE=$PR_ASSIGNEE" >> $GITHUB_ENV
-                        echo "PR_LABELS=$PR_LABELS" >> $GITHUB_ENV
-                        echo "PR_REVIEWERS=$PR_REVIEWERS" >> $GITHUB_ENV
-
                 - name: Run pipeline creation script
                   env:
                         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -45,11 +26,8 @@ jobs:
                         PR_NUMBER: ${{ github.event.pull_request.number }}
                         TARGET_BRANCH: "SQA"
                         PIPELINE_BRANCH: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_SQA"
-                        PR_TITLE: ${{ env.PR_TITLE }}
-                        PR_BODY: ${{ env.PR_BODY }}
-                        PR_ASSIGNEE: ${{ env.PR_ASSIGNEE }}
-                        PR_LABELS: ${{ env.PR_LABELS }}
-                        PR_REVIEWERS: ${{ env.PR_REVIEWERS }}
+                        PR_TITLE: ${{ github.event.pull_request.title }}
+                        PR_BODY: ${{ github.event.pull_request.body }}
                   run: |
                         #!/bin/bash
 
@@ -62,9 +40,6 @@ jobs:
                         PR_NUMBER=$PR_NUMBER
                         PR_TITLE: $PR_TITLE
                         PR_BODY: $PR_BODY
-                        PR_ASSIGNEE: $PR_ASSIGNEE
-                        PR_LABELS: $PR_LABELS
-                        PR_REVIEWERS: $PR_REVIEWERS
                         
                         echo "environment variables are initialized..."
                         
@@ -107,7 +82,7 @@ jobs:
                         if [ -z "$EXISTING_PR" ]; then
                           echo "No existing PR from pipeline branch. Creating a new PR..."
                           
-                          NEW_PR_URL=$(gh pr create --base "${TARGET_BRANCH}" --head "${PIPELINE_BRANCH}" --title "${PR_TITLE}" --body "${PR_BODY}" --assignee "${PR_ASSIGNEE}" --label "${PR_LABELS}" --reviewer "${PR_REVIEWERS}")
+                          NEW_PR_URL=$(gh pr create --base "${TARGET_BRANCH}" --head "${PIPELINE_BRANCH}" --title "${PR_TITLE}" --body "${PR_BODY}")
                           echo "Pipeline PR created: ${NEW_PR_URL}"
                           NEW_PR=$(echo "$NEW_PR_URL" | grep -o '[0-9]*$')
                           echo "Pipeline PR created: #${NEW_PR}"
