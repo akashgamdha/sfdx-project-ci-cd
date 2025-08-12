@@ -8,9 +8,12 @@ TARGET_BRANCH=$TARGET_BRANCH
 PIPELINE_BRANCH=$PIPELINE_BRANCH
 PR_NUMBER=$PR_NUMBER
 
+echo "environment variables are initialized..."
+
 # Configure git
 git config --global user.email "github-actions[bot]@users.noreply.github.com"
 git config --global user.name "github-actions[bot]"
+echo "Git Configured..."
 
 # Exit if source branch starts with 'gh-pipeline'
 if [[ $SOURCE_BRANCH == gh-pipeline* ]]; then
@@ -18,6 +21,7 @@ if [[ $SOURCE_BRANCH == gh-pipeline* ]]; then
   exit 0
 fi
 
+echo "Checking if pipeline exists..."
 # Check if the pipeline branch exists
 if git rev-parse --verify --quiet "origin/${PIPELINE_BRANCH}"; then
   echo "Pipeline branch exists. Merging PR source branch into pipeline branch..."
