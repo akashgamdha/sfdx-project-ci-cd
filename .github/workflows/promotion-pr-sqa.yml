@@ -26,6 +26,9 @@ jobs:
                         PR_NUMBER: ${{ github.event.pull_request.number }}
                         TARGET_BRANCH: "SQA"
                         PIPELINE_BRANCH: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_SQA"
+                        PR_TITLE: ${{ github.event.pull_request.title }}
+                        PR_BODY: ${{ github.event.pull_request.body }}
+                        PR_ASSIGNEE: ${{ github.event.pull_request.assignee.login }}
                   run: |
                         #!/bin/bash
 
