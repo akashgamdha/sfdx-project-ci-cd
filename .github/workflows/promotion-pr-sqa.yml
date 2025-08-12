@@ -1,0 +1,30 @@
+name: Auto promotion PR creation and validation for SQA
+on:
+      pull_request:
+            types: [opened]
+            branches:
+                  - SQA
+jobs:
+      create_promotion_pr:
+            runs-on: ubuntu-latest
+            if: "!startsWith(github.event.pull_request.head.ref, 'gh-pipeline')"
+            steps:
+                - name: Checkout repository
+                  uses: actions/checkout@v4
+                  with:
+                        fetch-depth: 0
+
+                - name: Set up GitHub CLI
+                  run: |
+                        sudo apt update -y
+                        sudo apt install gh -y
+
+                - name: Run pipeline creation script
+                  env:
+                        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                        SOURCE_BRANCH: ${{ github.event.pull_request.head.ref }}
+                        PR_NUMBER: ${{ github.event.pull_request.number }}
+                        TARGET_BRANCH: "SQA"
+                        PIPELINE_BRANCH: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_SQA"
+                  run: |
+                        .github/scripts/pipeline_creation.sh
