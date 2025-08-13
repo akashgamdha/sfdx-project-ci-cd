@@ -9,7 +9,7 @@ on:
 jobs:
       create_promotion_pr:
             runs-on: ubuntu-latest
-            if: "!startsWith(github.event.pull_request.head.ref, 'gh-pipeline') && (github.event.action == 'opened' || github.event.action == 'reopened')" 
+            if: "!startsWith(github.event.pull_request.head.ref, 'gh-pipeline') && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize')" 
             steps:
                 - name: Checkout repository
                   uses: actions/checkout@v4

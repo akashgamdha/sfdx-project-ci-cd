@@ -27,9 +27,9 @@ jobs:
                   env:
                         GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
                         SOURCE_BRANCH: ${{ github.ref_name }}
-                        PIPELINE_BRANCH_SQA: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_SQA"
-                        PIPELINE_BRANCH_UAT: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_UAT"
-                        PIPELINE_BRANCH_MAIN: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_main"
+                        PIPELINE_BRANCH_SQA: "gh-pipeline/${{ github.ref_name }}_-_SQA"
+                        PIPELINE_BRANCH_UAT: "gh-pipeline/${{ github.ref_name }}_-_UAT"
+                        PIPELINE_BRANCH_MAIN: "gh-pipeline/${{ github.ref_name }}_-_main"
                   run: |
                         #!/bin/bash
 
