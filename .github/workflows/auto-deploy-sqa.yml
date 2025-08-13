@@ -1,4 +1,4 @@
-name: Auto promotion PR creation and validation for SQA
+name: Auto deploy from SQA
 on:
       push:
             branches:
