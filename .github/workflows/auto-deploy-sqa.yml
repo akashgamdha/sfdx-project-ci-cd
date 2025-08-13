@@ -1,0 +1,77 @@
+name: Auto promotion PR creation and validation for SQA
+on:
+      push:
+            branches:
+                  - SQA
+            paths:
+                  - 'force-app/**'
+jobs:
+      deploy_promotion_pr:
+            runs-on: ubuntu-latest
+            steps:
+                - name: Checkout repository
+                  uses: actions/checkout@v4
+                  with:
+                        fetch-depth: 0
+
+                - uses: patrykacc/sf-cli-setup@v1.1.0
+                
+                - name: CLI Health check
+                  run: |
+                      echo "CLI Installed succesfuly!"
+                      sf -v
+                      
+                - name: Install SGD
+                  run: |
+                        echo y | sf plugins install sfdx-git-delta
+                        sf plugins
+
+                - name: 'Populate auth file with SFDX_URL secret of SQA org'
+                  shell: bash
+                  run: |
+                        echo ${{ secrets.SFDX_SQA_URL }} > ./SFDX_SQA_URL.txt
+                        
+                - name: Authenticate to Salesforce
+                  run: sf org login sfdx-url --sfdx-url-file ./SFDX_SQA_URL.txt --set-default --alias SQA
+
+                - name: Verify Authentication
+                  run: |
+                        sf org display --target-org SQA
+
+                - name: Generate Delta Package
+                  run: |
+                    # Create delta directory
+                    mkdir -p delta
+                    
+                    # Generate package.xml for changed components
+                    sf sgd:source:delta \
+                      --to "HEAD" \
+                      --from "HEAD~1" \
+                      --output-dir delta \
+                      --generate-delta
+            
+                    # Display generated package.xml
+                    echo "Generated package.xml:"
+                    if [ -f "delta/package/package.xml" ]; then
+                      cat delta/package/package.xml
+                    else
+                      echo "No package.xml generated"
+                    fi
+                    
+                    # Check if there are any changes to deploy
+                    if [ ! -f "delta/package/package.xml" ] || [ ! -s "delta/package/package.xml" ]; then
+                      echo "No metadata changes detected"
+                      echo "SKIP_DEPLOYMENT=true" >> $GITHUB_ENV
+                    else
+                      echo "SKIP_DEPLOYMENT=false" >> $GITHUB_ENV
+                    fi
+            
+                # Validate deployment (Check Only)
+                - name: Validate Deployment
+                  id: validate_step # Assign an ID to this step to access its outputs
+                  if: env.SKIP_DEPLOYMENT == 'false'
+                  run: |
+                    echo "Starting validation deployment..."
+                    
+                    # Run validation with test execution
+                    sf project deploy start --manifest delta/package/package.xml --target-org SQA --wait 30
