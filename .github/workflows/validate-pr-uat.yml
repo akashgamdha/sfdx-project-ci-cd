@@ -1,13 +1,15 @@
-name: Auto deploy from SQA
+name: Auto promotion PR validation for UAT
 on:
-      push:
+      pull_request:
+            types: [opened, synchronize, reopened]
             branches:
-                  - SQA
+                  - UAT
             paths:
                   - 'force-app/**'
 jobs:
-      deploy_promotion_pr:
+      validate_promotion_pr:
             runs-on: ubuntu-latest
+            if: "startsWith(github.event.pull_request.head.ref, 'gh-pipeline') && (github.event.action == 'opened' || github.event.action == 'synchronize')" 
             steps:
                 - name: Checkout repository
                   uses: actions/checkout@v4
@@ -26,27 +28,33 @@ jobs:
                         echo y | sf plugins install sfdx-git-delta
                         sf plugins
 
-                - name: 'Populate auth file with SFDX_URL secret of SQA org'
+                - name: 'Populate auth file with SFDX_URL secret of UAT org'
                   shell: bash
                   run: |
-                        echo ${{ secrets.SFDX_SQA_URL }} > ./SFDX_SQA_URL.txt
+                        echo ${{ secrets.SFDX_UAT_URL }} > ./SFDX_UAT_URL.txt
                         
                 - name: Authenticate to Salesforce
-                  run: sf org login sfdx-url --sfdx-url-file ./SFDX_SQA_URL.txt --set-default --alias SQA
+                  run: sf org login sfdx-url --sfdx-url-file ./SFDX_UAT_URL.txt --set-default --alias UAT
 
                 - name: Verify Authentication
                   run: |
-                        sf org display --target-org SQA
+                        sf org display --target-org UAT
 
                 - name: Generate Delta Package
                   run: |
+                    # Get the base branch (main/master)
+                    BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+                    HEAD_BRANCH="${{ github.event.pull_request.head.sha }}"
+                    
+                    echo "Generating delta package between $BASE_BRANCH and $HEAD_BRANCH"
+                    
                     # Create delta directory
                     mkdir -p delta
                     
                     # Generate package.xml for changed components
                     sf sgd:source:delta \
-                      --to "HEAD" \
-                      --from "HEAD~1" \
+                      --to $HEAD_BRANCH \
+                      --from origin/$BASE_BRANCH \
                       --output-dir delta \
                       --generate-delta
             
@@ -74,4 +82,4 @@ jobs:
                     echo "Starting validation deployment..."
                     
                     # Run validation with test execution
-                    sf project deploy start --manifest delta/package/package.xml --target-org SQA --wait 30
+                    sf project deploy validate --manifest delta/package/package.xml --target-org UAT --wait 30

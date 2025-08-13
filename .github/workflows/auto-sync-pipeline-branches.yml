@@ -1,0 +1,92 @@
+name: Auto sync pipeline branches
+on:
+      push:
+            branches-ignore:
+                  - SQA
+                  - UAT
+                  - main
+            paths:
+                  - 'force-app/**'
+
+jobs:
+      auto-sync-pipeline-branches:
+            runs-on: ubuntu-latest
+            if: "!startsWith(github.ref_name , 'gh-pipeline')"
+            steps:
+                - name: Checkout repository
+                  uses: actions/checkout@v4
+                  with:
+                        fetch-depth: 0
+
+                - name: Set up GitHub CLI
+                  run: |
+                        sudo apt update -y
+                        sudo apt install gh -y
+
+                - name: Run pipeline branch script
+                  env:
+                        GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+                        SOURCE_BRANCH: ${{ github.ref_name }}
+                        PIPELINE_BRANCH_SQA: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_SQA"
+                        PIPELINE_BRANCH_UAT: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_UAT"
+                        PIPELINE_BRANCH_MAIN: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_main"
+                  run: |
+                        #!/bin/bash
+
+                        set -e
+                        
+                        # Get the necessary environment variables
+                        SOURCE_BRANCH=$SOURCE_BRANCH
+                        PIPELINE_BRANCH_SQA=$PIPELINE_BRANCH_SQA
+                        PIPELINE_BRANCH_UAT=$PIPELINE_BRANCH_UAT
+                        PIPELINE_BRANCH_MAIN=$PIPELINE_BRANCH_MAIN
+                        
+                        echo "environment variables are initialized..."
+                        
+                        # Configure git
+                        # git config --global user.email "akash.gamdha@mckesson.com"
+                        # git config --global user.name "akashgamdha"
+                        # gh auth login --with-token <<< "${GH_TOKEN}"
+                        echo "Git Configured..."
+                        
+                        # Exit if source branch starts with 'gh-pipeline'
+                        if [[ $SOURCE_BRANCH == gh-pipeline* ]]; then
+                          echo "Source branch starts with 'gh-pipeline'. Skipping jobs."
+                          exit 0
+                        fi
+                        
+                        echo "Checking if pipeline exists..."
+                        # Check if the pipeline branch exists
+                        if git rev-parse --verify --quiet "origin/${PIPELINE_BRANCH_SQA}"; then
+                          echo "Pipeline branch exists. Merging PR source branch into pipeline branch..."
+                          git checkout "${PIPELINE_BRANCH_SQA}"
+                          echo "Checked out existing pipeline branch"
+                          git pull origin "${PIPELINE_BRANCH_SQA}"
+                          echo "Pulled existing pipeline branch"
+                          git merge "origin/${SOURCE_BRANCH}" --no-edit
+                          echo "Merged source branch in existing pipeline branch"
+                          git push origin "${PIPELINE_BRANCH_SQA}"
+                          echo "Pushed existing pipeline branch"
+                        fi
+
+                        if git rev-parse --verify --quiet "origin/${PIPELINE_BRANCH_UAT}"; then
+                          git checkout "${PIPELINE_BRANCH_UAT}"
+                          echo "Checked out existing pipeline branch"
+                          git pull origin "${PIPELINE_BRANCH_UAT}"
+                          echo "Pulled existing pipeline branch"
+                          git merge "origin/${SOURCE_BRANCH}" --no-edit
+                          echo "Merged source branch in existing pipeline branch"
+                          git push origin "${PIPELINE_BRANCH_UAT}"
+                          echo "Pushed existing pipeline branch"
+                        fi
+
+                        if git rev-parse --verify --quiet "origin/${PIPELINE_BRANCH_MAIN}"; then
+                          git checkout "${PIPELINE_BRANCH_MAIN}"
+                          echo "Checked out existing pipeline branch"
+                          git pull origin "${PIPELINE_BRANCH_MAIN}"
+                          echo "Pulled existing pipeline branch"
+                          git merge "origin/${SOURCE_BRANCH}" --no-edit
+                          echo "Merged source branch in existing pipeline branch"
+                          git push origin "${PIPELINE_BRANCH_MAIN}"
+                          echo "Pushed existing pipeline branch"
+                        fi

@@ -1,4 +1,4 @@
-name: Auto promotion PR creation and validation for SQA
+name: Auto promotion PR validation for SQA
 on:
       pull_request:
             types: [opened, synchronize, reopened]
