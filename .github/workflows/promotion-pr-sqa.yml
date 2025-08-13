@@ -262,14 +262,4 @@ jobs:
                     echo "Starting validation deployment..."
                     
                     # Run validation with test execution
-                    VALIDATION_RESULT=$(sf project deploy validate \
-                      --manifest delta/package/package.xml \
-                      --target-org SQA \
-                      --test-level RunLocalTests \
-                      --wait 30 \
-                      --json)
-            
-                    # Extract the 'id' field from the JSON output & Store the ID as a step output
-                    DEPLOY_ID=$(echo "$VALIDATION_RESULT" | jq -r '.result.id')
-                    echo "validation_id=$DEPLOY_ID" >> $GITHUB_OUTPUT
-                    echo "Validation ID: $DEPLOY_ID"
+                    sf project deploy validate --manifest delta/package/package.xml --target-org SQA --wait 30
