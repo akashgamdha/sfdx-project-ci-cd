@@ -212,7 +212,7 @@ jobs:
                         echo ${{ secrets.SFDX_SQA_URL}} > ./SFDX_SQA_URL.json
                         
                 - name: Authenticate to Salesforce
-                  run: sf org login sfdx-url --sfdx-url-file ./SFDX_INTEGRATION_URL.json --set-default --alias SQA
+                  run: sf org login sfdx-url --sfdx-url-file ./SFDX_SQA_URL.json --set-default --alias SQA
 
                 - name: Verify Authentication
                   run: |
