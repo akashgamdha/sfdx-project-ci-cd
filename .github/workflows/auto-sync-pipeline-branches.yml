@@ -9,7 +9,7 @@ on:
                   - 'force-app/**'
 
 jobs:
-      create_promotion_pr:
+      auto-sync-pipeline-branches:
             runs-on: ubuntu-latest
             if: "!startsWith(github.ref_name , 'gh-pipeline')"
             steps:
