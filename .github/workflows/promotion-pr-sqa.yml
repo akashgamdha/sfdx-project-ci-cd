@@ -204,7 +204,9 @@ jobs:
                       sf -v
                       
                 - name: Install SGD
-                  run: sf plugins install sfdx-git-delta
+                  run: |
+                        echo y | sf plugins install sfdx-git-delta
+                        sf plugins
 
                 - name: 'Populate auth file with SFDX_URL secret of SQA org'
                   shell: bash
