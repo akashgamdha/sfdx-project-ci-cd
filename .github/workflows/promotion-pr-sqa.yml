@@ -209,10 +209,10 @@ jobs:
                 - name: 'Populate auth file with SFDX_URL secret of SQA org'
                   shell: bash
                   run: |
-                        echo ${{ secrets.SFDX_SQA_URL_JSON}} > ./SFDX_SQA_URL.json
+                        echo ${{ secrets.SFDX_SQA_URL }} > ./SFDX_SQA_URL.txt
                         
                 - name: Authenticate to Salesforce
-                  run: sf org login sfdx-url --sfdx-url-file ./SFDX_SQA_URL.json --set-default --alias SQA
+                  run: sf org login sfdx-url --sfdx-url-file ./SFDX_SQA_URL.txt --set-default --alias SQA
 
                 - name: Verify Authentication
                   run: |
