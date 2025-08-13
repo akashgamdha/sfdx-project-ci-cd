@@ -90,6 +90,3 @@ jobs:
                           git push origin "${PIPELINE_BRANCH_MAIN}"
                           echo "Pushed existing pipeline branch"
                         fi
-
-                        # Close the original PR
-                        gh pr close "${PR_NUMBER}"
