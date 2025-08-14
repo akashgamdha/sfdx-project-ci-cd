@@ -9,77 +9,13 @@ on:
 jobs:
       validate_promotion_pr:
             runs-on: ubuntu-latest
-            if: "startsWith(github.event.pull_request.head.ref, 'gh-pipeline') && (github.event.action == 'opened' || github.event.action == 'synchronize')" 
             steps:
-                - name: Checkout repository
-                  uses: actions/checkout@v4
-                  with:
-                        fetch-depth: 0
-
-                - uses: patrykacc/sf-cli-setup@v1.1.0
-                
-                - name: CLI Health check
-                  run: |
-                      echo "CLI Installed succesfuly!"
-                      sf -v
-                      
-                - name: Install SGD
-                  run: |
-                        echo y | sf plugins install sfdx-git-delta
-                        sf plugins
-
-                - name: 'Populate auth file with SFDX_URL secret of SQA org'
-                  shell: bash
-                  run: |
-                        echo ${{ secrets.SFDX_SQA_URL }} > ./SFDX_SQA_URL.txt
-                        
-                - name: Authenticate to Salesforce
-                  run: sf org login sfdx-url --sfdx-url-file ./SFDX_SQA_URL.txt --set-default --alias SQA
-
-                - name: Verify Authentication
-                  run: |
-                        sf org display --target-org SQA
-
-                - name: Generate Delta Package
-                  run: |
-                    # Get the base branch (main/master)
-                    BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
-                    HEAD_BRANCH="${{ github.event.pull_request.head.sha }}"
-                    
-                    echo "Generating delta package between $BASE_BRANCH and $HEAD_BRANCH"
-                    
-                    # Create delta directory
-                    mkdir -p delta
-                    
-                    # Generate package.xml for changed components
-                    sf sgd:source:delta \
-                      --to $HEAD_BRANCH \
-                      --from origin/$BASE_BRANCH \
-                      --output-dir delta \
-                      --generate-delta
-            
-                    # Display generated package.xml
-                    echo "Generated package.xml:"
-                    if [ -f "delta/package/package.xml" ]; then
-                      cat delta/package/package.xml
-                    else
-                      echo "No package.xml generated"
-                    fi
-                    
-                    # Check if there are any changes to deploy
-                    if [ ! -f "delta/package/package.xml" ] || [ ! -s "delta/package/package.xml" ]; then
-                      echo "No metadata changes detected"
-                      echo "SKIP_DEPLOYMENT=true" >> $GITHUB_ENV
-                    else
-                      echo "SKIP_DEPLOYMENT=false" >> $GITHUB_ENV
-                    fi
-            
-                # Validate deployment (Check Only)
-                - name: Validate Deployment
-                  id: validate_step # Assign an ID to this step to access its outputs
-                  if: env.SKIP_DEPLOYMENT == 'false'
-                  run: |
-                    echo "Starting validation deployment..."
-                    
-                    # Run validation with test execution
-                    sf project deploy validate --manifest delta/package/package.xml --target-org SQA --wait 30
+            - name: Debug event information
+              run: |
+                    echo "Event Action: ${{ github.event.action }}"
+                    echo "Head Branch: ${{ github.event.pull_request.head.ref }}"
+                    echo "Base Branch: ${{ github.event.pull_request.base.ref }}"
+                    echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
+                    echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
+                    echo "event: ${{ github.event }}"
+                    echo "state: ${{ github.event.pull_request.state }}"
