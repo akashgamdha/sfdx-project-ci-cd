@@ -1,3 +1,7 @@
 import { LightningElement } from 'lwc';
 
-export default class MyLWC extends LightningElement {}
+export default class MyLWC extends LightningElement {
+    connectedCallback() {
+        
+    }
+}
