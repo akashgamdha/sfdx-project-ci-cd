@@ -1,13 +1,15 @@
-name: Auto promotion PR creation and validation for SQA
+name: Auto promotion PR creation for SQA
 on:
       pull_request:
-            types: [opened, closed]
+            types: [opened, closed, synchronize, reopened]
             branches:
                   - SQA
+            paths:
+                  - 'force-app/**'
 jobs:
       create_promotion_pr:
             runs-on: ubuntu-latest
-            if: "!startsWith(github.event.pull_request.head.ref, 'gh-pipeline') && github.event.action == 'opened'" 
+            if: "!startsWith(github.event.pull_request.head.ref, 'gh-pipeline') && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize')" 
             steps:
                 - name: Checkout repository
                   uses: actions/checkout@v4
