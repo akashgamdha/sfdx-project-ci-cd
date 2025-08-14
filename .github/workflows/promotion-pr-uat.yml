@@ -1,4 +1,4 @@
-name: Auto promotion PR creation and validation for UAT
+name: Auto promotion PR creation for UAT
 on:
       pull_request:
             types: [opened, closed]
