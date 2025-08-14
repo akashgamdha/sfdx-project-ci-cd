@@ -134,7 +134,7 @@ jobs:
                   env:
                         GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
                         SOURCE_BRANCH: ${{ env.FEATURE_BRANCH }}
-                        TARGET_BRANCH: "MAIN"
+                        TARGET_BRANCH: "main"
                         PIPELINE_BRANCH_MAIN: "gh-pipeline/${{ env.FEATURE_BRANCH }}_-_main"
                         PR_TITLE: ${{ github.event.pull_request.title }}
                         PR_BODY: ${{ github.event.pull_request.body }}
