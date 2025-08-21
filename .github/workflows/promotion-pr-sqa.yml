@@ -1,17 +1,194 @@
-name: Debug Auto promotion PR Creation for SQA
+name: Auto promotion PR creation for SQA
 on:
       pull_request_target:
-            types: [opened, synchronize, reopened]
+            types: [opened, closed, synchronize, reopened]
+            branches:
+                  - SQA
+            paths:
+                  - 'force-app/**'
 jobs:
-      validate_promotion_pr:
+      create_promotion_pr:
             runs-on: ubuntu-latest
+            if: "!startsWith(github.event.pull_request.head.ref, 'gh-pipeline') && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize')" 
             steps:
-            - name: Debug event information
-              run: |
-                    echo "Event Action: ${{ github.event.action }}"
-                    echo "Head Branch: ${{ github.event.pull_request.head.ref }}"
-                    echo "Base Branch: ${{ github.event.pull_request.base.ref }}"
-                    echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
-                    echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
-                    echo "event: ${{ github.event }}"
-                    echo "state: ${{ github.event.pull_request.state }}"
+                - name: Checkout repository
+                  uses: actions/checkout@v4
+                  with:
+                        fetch-depth: 0
+
+                - name: Set up GitHub CLI
+                  run: |
+                        sudo apt update -y
+                        sudo apt install gh -y
+
+                - name: Run pipeline creation script
+                  env:
+                        GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+                        SOURCE_BRANCH: ${{ github.event.pull_request.head.ref }}
+                        PR_NUMBER: ${{ github.event.pull_request.number }}
+                        TARGET_BRANCH: "SQA"
+                        PIPELINE_BRANCH_SQA: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_SQA"
+                        PIPELINE_BRANCH_UAT: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_UAT"
+                        PIPELINE_BRANCH_MAIN: "gh-pipeline/${{ github.event.pull_request.head.ref }}_-_main"
+                        PR_TITLE: ${{ github.event.pull_request.title }}
+                        PR_BODY: ${{ github.event.pull_request.body }}
+                  run: |
+                        #!/bin/bash
+
+                        set -e
+                        
+                        # Get the necessary environment variables
+                        SOURCE_BRANCH=$SOURCE_BRANCH
+                        TARGET_BRANCH=$TARGET_BRANCH
+                        PIPELINE_BRANCH_SQA=$PIPELINE_BRANCH_SQA
+                        PIPELINE_BRANCH_UAT=$PIPELINE_BRANCH_UAT
+                        PIPELINE_BRANCH_MAIN=$PIPELINE_BRANCH_MAIN
+                        PR_NUMBER=$PR_NUMBER
+                        PR_TITLE=$PR_TITLE
+                        PR_BODY=$PR_BODY
+                        
+                        echo "environment variables are initialized..."
+                        
+                        # Configure git
+                        # git config --global user.email "akash.gamdha@mckesson.com"
+                        # git config --global user.name "akashgamdha"
+                        # gh auth login --with-token <<< "${GH_TOKEN}"
+                        echo "Git Configured..."
+                        
+                        # Exit if source branch starts with 'gh-pipeline'
+                        if [[ $SOURCE_BRANCH == gh-pipeline* ]]; then
+                          echo "Source branch starts with 'gh-pipeline'. Skipping jobs."
+                          exit 0
+                        fi
+                        
+                        echo "Checking if pipeline exists..."
+                        # Check if the pipeline branch exists
+                        if git rev-parse --verify --quiet "origin/${PIPELINE_BRANCH_SQA}"; then
+                          echo "Pipeline branch exists. Merging PR source branch into pipeline branch..."
+                          git checkout "${PIPELINE_BRANCH_SQA}"
+                          echo "Checked out existing pipeline branch"
+                          git pull origin "${PIPELINE_BRANCH_SQA}"
+                          echo "Pulled existing pipeline branch"
+                          git merge "origin/${SOURCE_BRANCH}" --no-edit
+                          echo "Merged source branch in existing pipeline branch"
+                          git push origin "${PIPELINE_BRANCH_SQA}"
+                          echo "Pushed existing pipeline branch"
+                        else
+                          echo "Pipeline branch does not exist. Creating pipeline branch from source branch..."
+                          git checkout -b "${PIPELINE_BRANCH_SQA}" "origin/${SOURCE_BRANCH}"
+                          echo "Checked out new pipeline branch"
+                          git push origin "${PIPELINE_BRANCH_SQA}"
+                          echo "Pushed new pipeline branch"
+                        fi
+
+                        if git rev-parse --verify --quiet "origin/${PIPELINE_BRANCH_UAT}"; then
+                          git checkout "${PIPELINE_BRANCH_UAT}"
+                          echo "Checked out existing pipeline branch"
+                          git pull origin "${PIPELINE_BRANCH_UAT}"
+                          echo "Pulled existing pipeline branch"
+                          git merge "origin/${SOURCE_BRANCH}" --no-edit
+                          echo "Merged source branch in existing pipeline branch"
+                          git push origin "${PIPELINE_BRANCH_UAT}"
+                          echo "Pushed existing pipeline branch"
+                        fi
+
+                        if git rev-parse --verify --quiet "origin/${PIPELINE_BRANCH_MAIN}"; then
+                          git checkout "${PIPELINE_BRANCH_MAIN}"
+                          echo "Checked out existing pipeline branch"
+                          git pull origin "${PIPELINE_BRANCH_MAIN}"
+                          echo "Pulled existing pipeline branch"
+                          git merge "origin/${SOURCE_BRANCH}" --no-edit
+                          echo "Merged source branch in existing pipeline branch"
+                          git push origin "${PIPELINE_BRANCH_MAIN}"
+                          echo "Pushed existing pipeline branch"
+                        fi
+
+                        echo "Checking if PR exists"
+                        # Check if a PR exists with the pipeline branch as source
+                        EXISTING_PR=$(gh pr list --state open --base "${TARGET_BRANCH}" --head "${PIPELINE_BRANCH_SQA}" --json number --jq ".[].number")
+                        echo "Checking if PR complete"
+                        if [ -z "$EXISTING_PR" ]; then
+                          echo "No existing PR from pipeline branch. Creating a new PR..."
+                          
+                          NEW_PR_URL=$(gh pr create --base "${TARGET_BRANCH}" --head "${PIPELINE_BRANCH_SQA}" --title "${PR_TITLE}" --body "${PR_BODY}")
+                          echo "Pipeline PR created: ${NEW_PR_URL}"
+                          NEW_PR=$(echo "$NEW_PR_URL" | grep -o '[0-9]*$')
+                          echo "Pipeline PR created: #${NEW_PR}"
+                        
+                          # Add a comment to the original PR
+                          gh pr comment "${PR_NUMBER}" --body "A new PR was created for pipeline: #${NEW_PR}"
+                        else
+                          echo "Pipeline PR already exists: #${EXISTING_PR}"
+                        fi
+
+                        # Close the original PR
+                        gh pr close "${PR_NUMBER}"
+
+      create_promotion_pr_next:
+            runs-on: ubuntu-latest
+            if: github.event.action == 'closed' && github.event.pull_request.merged == true
+            steps:
+                - name: Checkout repository
+                  uses: actions/checkout@v4
+                  with:
+                        fetch-depth: 0
+
+                - name: Set up GitHub CLI
+                  run: |
+                        sudo apt update -y
+                        sudo apt install gh -y
+                        
+                - name: Extract origina feature branch name
+                  run: |
+                        echo "Original ref: ${{ github.event.pull_request.head.ref }}"
+                        FEATURE_BRANCH=$(echo "${{ github.event.pull_request.head.ref }}" | sed -n 's|^gh-pipeline/\(.*\)_-_SQA$|\1|p')
+                        echo "Extracted test part: $FEATURE_BRANCH"
+                        echo "FEATURE_BRANCH=$FEATURE_BRANCH" >> $GITHUB_ENV
+                        
+                - name: Run pipeline creation script
+                  env:
+                        GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+                        SOURCE_BRANCH: ${{ env.FEATURE_BRANCH }}
+                        TARGET_BRANCH: "UAT"
+                        PIPELINE_BRANCH_UAT: "gh-pipeline/$${{ env.FEATURE_BRANCH }}_-_UAT"
+                        PIPELINE_BRANCH_MAIN: "gh-pipeline/${{ env.FEATURE_BRANCH }}_-_main"
+                        PR_TITLE: ${{ github.event.pull_request.title }}
+                        PR_BODY: ${{ github.event.pull_request.body }}
+                  run: |
+                        #!/bin/bash
+
+                        set -e
+                        
+                        # Get the necessary environment variables
+                        SOURCE_BRANCH=$SOURCE_BRANCH
+                        TARGET_BRANCH=$TARGET_BRANCH
+                        PIPELINE_BRANCH_UAT=$PIPELINE_BRANCH_UAT
+                        PIPELINE_BRANCH_MAIN=$PIPELINE_BRANCH_MAIN
+                        PR_TITLE=$PR_TITLE
+                        PR_BODY=$PR_BODY
+                        
+                        echo "environment variables are initialized..."
+                        
+                        # Configure git
+                        # git config --global user.email "akash.gamdha@mckesson.com"
+                        # git config --global user.name "akashgamdha"
+                        # gh auth login --with-token <<< "${GH_TOKEN}"
+                        echo "Git Configured..."
+
+                        echo "Checking if PR exists"
+                        # Check if a PR exists with the pipeline branch as source
+                        EXISTING_PR=$(gh pr list --state open --base "${TARGET_BRANCH}" --head "${PIPELINE_BRANCH_UAT}" --json number --jq ".[].number")
+                        echo "Checking if PR complete"
+                        if [ -z "$EXISTING_PR" ]; then
+                          echo "No existing PR from pipeline branch. Creating a new PR..."
+                          
+                          NEW_PR_URL=$(gh pr create --base "${TARGET_BRANCH}" --head "${SOURCE_BRANCH}" --title "${PR_TITLE}" --body "${PR_BODY}")
+                        else
+                          echo "Pipeline PR already exists: #${EXISTING_PR}"
+                        fi
+                  
+                - name: Delete pipeline branch
+                  run: |
+                        branch=${{ github.event.pull_request.head.ref }}
+                        echo "Deleting branch: $branch"
+                        git push origin --delete $branch
