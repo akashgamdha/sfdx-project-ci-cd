@@ -1,6 +1,6 @@
 name: Auto promotion PR creation for UAT
 on:
-      pull_request:
+      pull_request_target:
             types: [opened, closed]
             branches:
                   - UAT
