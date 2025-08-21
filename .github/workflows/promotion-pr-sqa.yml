@@ -2,10 +2,6 @@ name: Debug Auto promotion PR Creation for SQA
 on:
       pull_request_target:
             types: [opened, synchronize, reopened]
-            branches:
-                  - SQA
-            paths:
-                  - 'force-app/**'
 jobs:
       validate_promotion_pr:
             runs-on: ubuntu-latest
