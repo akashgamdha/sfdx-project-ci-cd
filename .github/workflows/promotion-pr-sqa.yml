@@ -186,3 +186,9 @@ jobs:
                         else
                           echo "Pipeline PR already exists: #${EXISTING_PR}"
                         fi
+                  
+                - name: Delete pipeline branch
+                  run: |
+                        branch=${{ github.event.pull_request.head.ref }}
+                        echo "Deleting branch: $branch"
+                        git push origin --delete $branch
