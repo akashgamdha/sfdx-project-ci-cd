@@ -4,4 +4,8 @@ export default class TestLWC extends LightningElement {
   connectedCallback() {
     console.log('Hi');
   }
+
+  renderedCallback() {
+    console.log('Hi');
+  }
 }
