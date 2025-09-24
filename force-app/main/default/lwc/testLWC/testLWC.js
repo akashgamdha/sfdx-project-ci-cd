@@ -6,4 +6,8 @@ export default class TestLWC extends LightningElement {
     console.log('Another Hi');
     console.log('Third Hi');
   }
+
+  renderedCallback() {
+    console.log('Hi from render');
+  }
 }
