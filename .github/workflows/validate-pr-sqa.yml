@@ -36,19 +36,19 @@ jobs:
                         
                         # Prepare a comma-separated list
                         filtered_file_list=$(IFS=,; echo "${filtered_files[*]}")
-                        pr_body = "${{ github.event.pull_request.body }}"
+                        pr_body="${{ github.event.pull_request.body }}"
                         echo "$pr_body"
                         
-                        apex_classes_from_pr_body = $(echo "$pr_body" | sed -n 's/.*::START_APEX_TEST::\(.*\)::END_APEX_TEST::.*/\1/p')
+                        apex_classes_from_pr_body=$(echo "$pr_body" | sed -n 's/.*::START_APEX_TEST::\(.*\)::END_APEX_TEST::.*/\1/p')
 
                         # Check if apex_classes_from_pr_body is empty
                         if [ -z "$apex_classes_from_pr_body" ]; then
                               echo "No .cls files containing 'test' found in the PR."
                         else
                               if [ -z "$filtered_file_list" ]; then
-                                    filtered_file_list = "apex_classes_from_pr_body"
+                                    filtered_file_list="$apex_classes_from_pr_body"
                               else
-                                    filtered_file_list = "$filtered_file_list,$apex_classes_from_pr_body"
+                                    filtered_file_list="$filtered_file_list,$apex_classes_from_pr_body"
                               fi
                         fi
                         # Print the result
