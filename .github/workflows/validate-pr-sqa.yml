@@ -27,19 +27,42 @@ jobs:
                         # Filter files that contain "test"
                         filtered_files=()
                         while IFS= read -r file; do
-                        if [[ "$file" == *"test"* ]]; then
-                        filtered_files+=("$file")
-                        fi
+                              if [[ "$file" == *"test"* ]]; then
+                                    file=${file#force-app/main/default/classes/}
+                                    file=${file%.cls}
+                                    filtered_files+=("$file")
+                              fi
                         done <<< "$lower_case_files"
                         
                         # Prepare a comma-separated list
                         filtered_file_list=$(IFS=,; echo "${filtered_files[*]}")
+                        pr_body = "${{ github.event.pull_request.body }}"
+                        echo "$pr_body"
                         
+                        apex_classes_from_pr_body = $(echo "$pr_body" | sed -n 's/.*::START_APEX_TEST::\(.*\)::END_APEX_TEST::.*/\1/p')
+
+                        # Check if apex_classes_from_pr_body is empty
+                        if [ -z "$apex_classes_from_pr_body" ]; then
+                              echo "No .cls files containing 'test' found in the PR."
+                        else
+                              if [ -z "$filtered_file_list" ]; then
+                                    filtered_file_list = "apex_classes_from_pr_body"
+                              else
+                                    filtered_file_list = "$filtered_file_list,$apex_classes_from_pr_body"
+                              fi
+                        fi
                         # Print the result
                         echo "Filtered files: $filtered_file_list"
                         
                         # Set an output
-                        echo "filtered_files=$filtered_file_list" >> $GITHUB_ENV
+                        if [ -z "$apex_classes_from_pr_body" ]; then
+                              echo "No test class found"
+                              echo "test_classes=$filtered_file_list" >> $GITHUB_ENV
+                              echo "run_specified_test=false" >> $GITHUB_ENV
+                        else
+                              echo "test_classes=$filtered_file_list" >> $GITHUB_ENV
+                              echo "run_specified_test=true" >> $GITHUB_ENV
+                        fi
                 - uses: patrykacc/sf-cli-setup@v1.1.0
                 
                 - name: CLI Health check
@@ -106,4 +129,11 @@ jobs:
                     echo "Starting validation deployment..."
                     
                     # Run validation with test execution
-                    sf project deploy validate --manifest delta/package/package.xml --target-org SQA --wait 30
+                    if [ "$run_specified_test" = "true" ]; then
+                          sf project deploy validate --manifest delta/package/package.xml --target-org SQA --test-level RunSpecifiedTests --run-tests "$test_classes"--wait 30
+                    else
+                          sf project deploy validate --manifest delta/package/package.xml --target-org SQA --wait 30
+                    fi
+                  env:
+                    run_specified_test: ${{ env.run_specified_test }}
+                    test_classes: ${{ env.test_classes }}
