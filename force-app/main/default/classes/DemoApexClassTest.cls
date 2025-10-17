@@ -24,6 +24,6 @@ private class DemoApexClassTest {
 
     @isTest
     static void Method1Test() {
-        DemoApexClass,Method1();
+        DemoApexClass.Method1();
     }
 }
