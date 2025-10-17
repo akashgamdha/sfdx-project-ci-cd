@@ -16,6 +16,30 @@ jobs:
                   with:
                         fetch-depth: 0
 
+                - name: List .cls files in the PR
+                  run: |
+                        # Use git diff to list files of the PR
+                        files=$(git diff --name-only origin/SQA -- '*.cls')
+                        
+                        # Convert filenames to lowercase
+                        lower_case_files=$(printf '%s\n' "$files" | tr '[:upper:]' '[:lower:]')
+                        
+                        # Filter files that contain "test"
+                        filtered_files=()
+                        while IFS= read -r file; do
+                        if [[ "$file" == *"test"* ]]; then
+                        filtered_files+=("$file")
+                        fi
+                        done <<< "$lower_case_files"
+                        
+                        # Prepare a comma-separated list
+                        filtered_file_list=$(IFS=,; echo "${filtered_files[*]}")
+                        
+                        # Print the result
+                        echo "Filtered files: $filtered_file_list"
+                        
+                        # Set an output
+                        echo "filtered_files=$filtered_file_list" >> $GITHUB_ENV
                 - uses: patrykacc/sf-cli-setup@v1.1.0
                 
                 - name: CLI Health check
