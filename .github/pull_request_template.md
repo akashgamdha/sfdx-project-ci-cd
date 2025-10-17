@@ -58,7 +58,7 @@ _Example: SALES-##### - Adding new picklist value "Web" to Channel__c field on C
 #### Test Classes - REQUIRED for Apex/Flows 🚧
 _Code Coverage must be at 85% or Higher_ 
 
-✏️ List Test Classes Separated  by a Comma (,):
+::START_APEX_TEST::comma separated list of test classes::END_APEX_TEST::
 
 ---
 ### Checklist ✔️
