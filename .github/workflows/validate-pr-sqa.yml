@@ -130,8 +130,10 @@ jobs:
                     
                     # Run validation with test execution
                     if [ "$run_specified_test" = "true" ]; then
+                          echo "Starting validation deployment with specified tests $test_classes"
                           sf project deploy validate --manifest delta/package/package.xml --target-org SQA --test-level RunSpecifiedTests --tests "$test_classes"--wait 30
                     else
+                          echo "Starting validation deployment without test classes"
                           sf project deploy validate --manifest delta/package/package.xml --target-org SQA --wait 30
                     fi
                   env:
