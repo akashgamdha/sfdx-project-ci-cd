@@ -40,7 +40,7 @@ jobs:
                         echo "$pr_body"
                         
                         apex_classes_from_pr_body=$(echo "$pr_body" | sed -n 's/.*::START_APEX_TEST::\(.*\)::END_APEX_TEST::.*/\1/p')
-
+                        apex_classes_from_pr_body=${apex_classes_from_pr_body#comma separated list of test classes}
                         # Check if apex_classes_from_pr_body is empty
                         if [ -z "$apex_classes_from_pr_body" ]; then
                               echo "No .cls files containing 'test' found in the PR."
@@ -130,7 +130,7 @@ jobs:
                     
                     # Run validation with test execution
                     if [ "$run_specified_test" = "true" ]; then
-                          sf project deploy validate --manifest delta/package/package.xml --target-org SQA --test-level RunSpecifiedTests --run-tests "$test_classes"--wait 30
+                          sf project deploy validate --manifest delta/package/package.xml --target-org SQA --test-level RunSpecifiedTests --tests "$test_classes"--wait 30
                     else
                           sf project deploy validate --manifest delta/package/package.xml --target-org SQA --wait 30
                     fi
